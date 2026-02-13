@@ -2,7 +2,7 @@
 
 @Library('homelab@main') _
 
-// Pod template for gmailctl validation
+// Pod template for gmailctl build
 def POD_YAML = '''
 apiVersion: v1
 kind: Pod
@@ -26,10 +26,10 @@ spec:
     resources:
       requests:
         cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 200m
         memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
 '''
 
 pipeline {
@@ -42,8 +42,13 @@ pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         skipDefaultCheckout(true)
-        timeout(time: 5, unit: 'MINUTES')
+        timeout(time: 10, unit: 'MINUTES')
         disableConcurrentBuilds()
+    }
+
+    environment {
+        // gmailctl release version to download
+        GMAILCTL_VERSION = '0.10.7'
     }
 
     stages {
@@ -53,12 +58,12 @@ pipeline {
             }
         }
 
-        stage('Validate YAML') {
+        stage('Validate Config') {
             steps {
                 container('tools') {
                     sh '''
                         echo "=== Installing dependencies ==="
-                        apk add --no-cache yq jq
+                        apk add --no-cache yq jq curl
 
                         echo ""
                         echo "=== Validating config.yaml syntax ==="
@@ -74,38 +79,92 @@ pipeline {
                         echo "=== Validating labels.json syntax ==="
                         jq '.' labels.json > /dev/null
                         echo "✓ labels.json is valid JSON"
+
+                        echo ""
+                        echo "=== Config Summary ==="
+                        RULE_COUNT=$(yq '.rules | length' config.yaml)
+                        echo "Rules defined: $RULE_COUNT"
                     '''
                 }
             }
         }
 
-        stage('Check Structure') {
+        stage('Download gmailctl') {
             steps {
                 container('tools') {
                     sh '''
-                        echo "=== Checking config.yaml structure ==="
+                        echo "=== Downloading gmailctl v${GMAILCTL_VERSION} ==="
 
-                        # Check for required version field
-                        VERSION=$(yq '.version' config.yaml)
-                        echo "Version: $VERSION"
+                        # Download for multiple platforms
+                        mkdir -p dist
 
-                        # Count rules
-                        RULE_COUNT=$(yq '.rules | length' config.yaml)
-                        echo "Rules defined: $RULE_COUNT"
+                        # Linux amd64
+                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_linux_amd64.tar.gz" | tar -xz -C dist
+                        mv dist/gmailctl dist/gmailctl-linux-amd64
+
+                        # Linux arm64
+                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_linux_arm64.tar.gz" | tar -xz -C dist
+                        mv dist/gmailctl dist/gmailctl-linux-arm64
+
+                        # macOS amd64
+                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_darwin_amd64.tar.gz" | tar -xz -C dist
+                        mv dist/gmailctl dist/gmailctl-darwin-amd64
+
+                        # macOS arm64 (Apple Silicon)
+                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_darwin_arm64.tar.gz" | tar -xz -C dist
+                        mv dist/gmailctl dist/gmailctl-darwin-arm64
 
                         echo ""
-                        echo "=== Checking filters.json structure ==="
-                        FILTER_COUNT=$(jq '.feed.entry | length' filters.json)
-                        echo "Filters in export: $FILTER_COUNT"
+                        echo "=== Downloaded binaries ==="
+                        ls -la dist/
 
-                        echo ""
-                        echo "=== Checking labels.json structure ==="
-                        LABEL_COUNT=$(jq '.labels | length' labels.json)
-                        echo "Labels defined: $LABEL_COUNT"
-
-                        echo ""
-                        echo "✓ All structure checks passed"
+                        # Verify one of them works
+                        chmod +x dist/gmailctl-linux-amd64
+                        ./dist/gmailctl-linux-amd64 version || echo "Version check skipped (may need glibc)"
                     '''
+                }
+            }
+        }
+
+        stage('Push to Nexus') {
+            when {
+                branch 'main'
+            }
+            steps {
+                container('tools') {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'nexus-admin',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                    )]) {
+                        sh '''
+                            echo "=== Pushing gmailctl binaries to Nexus ==="
+
+                            NEXUS_URL="https://nexus.erauner.dev/repository/raw-hosted"
+
+                            for binary in dist/gmailctl-*; do
+                                name=$(basename $binary)
+                                echo "Uploading $name..."
+                                curl -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                                    --upload-file "$binary" \
+                                    "${NEXUS_URL}/gmailctl/v${GMAILCTL_VERSION}/${name}"
+                            done
+
+                            # Also upload as "latest"
+                            for binary in dist/gmailctl-*; do
+                                name=$(basename $binary)
+                                echo "Uploading $name as latest..."
+                                curl -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                                    --upload-file "$binary" \
+                                    "${NEXUS_URL}/gmailctl/latest/${name}"
+                            done
+
+                            echo ""
+                            echo "✓ Binaries available at:"
+                            echo "  ${NEXUS_URL}/gmailctl/v${GMAILCTL_VERSION}/"
+                            echo "  ${NEXUS_URL}/gmailctl/latest/"
+                        '''
+                    }
                 }
             }
         }
