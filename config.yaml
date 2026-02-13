@@ -1,0 +1,191 @@
+# gmailctl configuration
+# https://github.com/mbrt/gmailctl
+#
+# To apply: gmailctl apply
+# To diff:  gmailctl diff
+# To export current state: gmailctl export
+
+version: v1alpha3
+
+author:
+  name: Evan Rauner
+  email: raunerevan@gmail.com
+
+labels:
+  - name: GitHub
+  - name: LinkedIn
+  - name: Newsletters
+  - name: Jobs
+  - name: Receipts
+  - name: Notes
+  - name: Later
+  - name: Blocked
+
+filters:
+  # ===================
+  # High-Volume Automation
+  # ===================
+  
+  # GitHub notifications - archive + mark read
+  - filter:
+      from: notifications@github.com
+    actions:
+      archive: true
+      markRead: true
+      labels:
+        - GitHub
+
+  # LinkedIn - all variants, archive
+  - filter:
+      or:
+        - from: "@linkedin.com"
+        - from: "@e.linkedin.com"
+        - from: "@linkedin-email.com"
+    actions:
+      archive: true
+      labels:
+        - LinkedIn
+
+  # Job alerts - archive for later review
+  - filter:
+      or:
+        - from: jobalerts-noreply@linkedin.com
+        - from: "@indeed.com"
+        - from: "@glassdoor.com"
+        - from: "@ziprecruiter.com"
+    actions:
+      archive: true
+      labels:
+        - Jobs
+
+  # ===================
+  # Newsletters
+  # ===================
+
+  # Substack newsletters
+  - filter:
+      from: "@substack.com"
+    actions:
+      archive: true
+      labels:
+        - Newsletters
+
+  # Beehiiv newsletters
+  - filter:
+      from: "@mail.beehiiv.com"
+    actions:
+      archive: true
+      labels:
+        - Newsletters
+
+  # TLDR Newsletter
+  - filter:
+      from: dan@tldrnewsletter.com
+    actions:
+      archive: true
+      category: personal
+
+  # Mark Manson - star + forward to Readwise
+  - filter:
+      from: mark@markmanson.net
+    actions:
+      star: true
+      category: personal
+      forward: feed@readwise.io
+
+  # Christian Bagerbach - forward to Readwise
+  - filter:
+      from: christian@bagerbach.com
+    actions:
+      category: personal
+      forward: feed@readwise.io
+
+  # Arjan Codes - star
+  - filter:
+      query: "Arjan Codes"
+    actions:
+      star: true
+
+  # ===================
+  # Noise Suppression
+  # ===================
+
+  # Reddit - archive
+  - filter:
+      from: noreply@redditmail.com
+    actions:
+      archive: true
+
+  # Steam - archive
+  - filter:
+      from: noreply@steampowered.com
+    actions:
+      archive: true
+
+  # Pieces app
+  - filter:
+      from: updates@pieces.app
+    actions:
+      category: personal
+
+  # Twitch - trash
+  - filter:
+      from: no-reply@twitch.tv
+    actions:
+      delete: true
+
+  # Pieces Post (beehiiv) - trash
+  - filter:
+      from: thepiecespost@mail.beehiiv.com
+    actions:
+      delete: true
+
+  # ===================
+  # Receipts & Financial
+  # ===================
+
+  - filter:
+      and:
+        - or:
+            - from: "@email.westerndigital.com"
+            - from: "@fidelity.com"
+            - from: "@amazon.com"
+            - from: "@paypal.com"
+        - or:
+            - subject: receipt
+            - subject: order
+            - subject: confirmation
+            - subject: statement
+    actions:
+      archive: true
+      labels:
+        - Receipts
+
+  # ===================
+  # Priority / VIP
+  # ===================
+
+  # Tulsa Remote - important
+  - filter:
+      subject: "Tulsa Remote"
+    actions:
+      category: personal
+
+  # Real humans (direct emails, not automated)
+  - filter:
+      and:
+        - to: raunerevan@gmail.com
+        - not:
+            or:
+              - from: noreply
+              - from: notifications
+              - from: no-reply
+              - from: alert
+              - from: digest
+              - from: newsletter
+              - from: "@linkedin.com"
+              - from: "@github.com"
+              - from: "@substack.com"
+    actions:
+      markImportant: true
+      markNotSpam: true

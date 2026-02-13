@@ -1,0 +1,232 @@
+{
+  "filters": [
+    {
+      "action": {
+        "addLabelIds": [
+          "TRASH"
+        ]
+      },
+      "criteria": {
+        "excludeChats": true,
+        "query": "{from: no-reply@twitch.tv}"
+      },
+      "id": "ANe1Bmh5cT1sUTj0mKr7LhyqXunUGQvEI4-IQQ"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "TRASH"
+        ]
+      },
+      "criteria": {
+        "excludeChats": true,
+        "query": "{from: thepiecespost@mail.beehiiv.com}"
+      },
+      "id": "ANe1Bmh-GeInDeSlU-wYsQ5jyiVAcnCWwmN1aw"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_32"
+        ],
+        "removeLabelIds": [
+          "UNREAD",
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "from": "notifications@github.com"
+      },
+      "id": "ANe1BmjntlX2868gHpgGpjSKGL6ZwAQP6Jxgkg"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_33"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "query": "from:(*@linkedin.com OR *@e.linkedin.com OR *@linkedin-email.com)"
+      },
+      "id": "ANe1Bmgm8mkXWuMoYQ7BU_McHC8lQMo1KRIPDg"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_34"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "query": "from:(*@substack.com)"
+      },
+      "id": "ANe1BmgFK_KnD3HHjStrc11smikLkWvFiuqADw"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_34"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "query": "from:(*@mail.beehiiv.com)"
+      },
+      "id": "ANe1BmiMryk80lIj5bZFqXMv_tgC1jDKM_ezhw"
+    },
+    {
+      "action": {
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "from": "noreply@redditmail.com"
+      },
+      "id": "ANe1BmgwwUkU9ixpbC32I9k1uP3XjXx9Rn_XwA"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_35"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "query": "from:(jobalerts-noreply@linkedin.com OR *@indeed.com OR *@glassdoor.com OR *@ziprecruiter.com)"
+      },
+      "id": "ANe1Bmis4PUu51KFxFiRoZljW2ZNPq_jGb4Z6A"
+    },
+    {
+      "action": {
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "from": "noreply@steampowered.com"
+      },
+      "id": "ANe1BmgpY1u01AonNLu1Pgg073Q9boxyGYIYoQ"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "Label_5"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "query": "from:(*@email.westerndigital.com OR *@fidelity.com OR *@amazon.com OR *@paypal.com) subject:(receipt OR order OR confirmation OR statement)"
+      },
+      "id": "ANe1Bmj2rogRFNvMQaDJUAugB6fncFp1Kpb86g"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "IMPORTANT"
+        ],
+        "removeLabelIds": [
+          "SPAM"
+        ]
+      },
+      "criteria": {
+        "query": "to:raunerevan@gmail.com -from:(noreply OR notifications OR no-reply OR alert OR digest OR newsletter OR @linkedin.com OR @github.com OR @substack.com)"
+      },
+      "id": "ANe1Bmippjmx2ojGQeI291HIJ7IggFIR_ZPVcg"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "STARRED",
+          "CATEGORY_PERSONAL"
+        ],
+        "forward": "feed@readwise.io"
+      },
+      "criteria": {
+        "from": "mark@markmanson.net"
+      },
+      "id": "ANe1BmgA5iU7C9nKAflAwEXCxOKwJDNoaquwrmfYZYz37u9-z_-BNWdApa0v7DDv8aC2Iv4a6Q"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "STARRED"
+        ]
+      },
+      "criteria": {
+        "query": "Arjan Codes"
+      },
+      "id": "ANe1BmjKGVRCuf1Y4-Ov7K-1e25EqyfeA6A5FOIF7b5OfQOn1VwUdR5OiC3rKWqZd6r0oVlsGQ"
+    },
+    {
+      "action": {
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "from": "dan@tldrnewsletter.com"
+      },
+      "id": "ANe1Bmgxs_GJdvfX3UfL1myQc_9wCqj3NxuGSp1IxuBDm3Eo-QFycYekQHDBuR1rm6G6_ieAbw"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "CATEGORY_PERSONAL"
+        ],
+        "removeLabelIds": [
+          "INBOX"
+        ]
+      },
+      "criteria": {
+        "from": "dan@tldrnewsletter.com"
+      },
+      "id": "ANe1BmgFz4T8D7HEjUON6JcKBbeGGXWtdATP2wEO3vV_1xxD0m5DQ3ERjUSXs-g9cjwxJ6PWtA"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "CATEGORY_PERSONAL"
+        ]
+      },
+      "criteria": {
+        "from": "updates@pieces.app"
+      },
+      "id": "ANe1BmiWv1gg6tmT7m9LW_tFM2YiWdjQUF4Rpz8ejKF_o7nJNJgXxR6jKb-8eLTRPtiH6Z847g"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "CATEGORY_PERSONAL"
+        ]
+      },
+      "criteria": {
+        "subject": "Tulsa Remote"
+      },
+      "id": "ANe1BmgQGrRo958Aij0swu2MwJS_f3lJfA6KWx9wHnZhqp8kxBBH71Nwq4G5NGPE9zJ6SHE0kw"
+    },
+    {
+      "action": {
+        "addLabelIds": [
+          "CATEGORY_PERSONAL"
+        ],
+        "forward": "feed@readwise.io"
+      },
+      "criteria": {
+        "from": "christian@bagerbach.com"
+      },
+      "id": "ANe1BmhF7irFw7AevIZ5qxA73qJzuc-R0K2Nb6YEzrLb-rRoOUqlg89UHuyddHwZ-NGZGMskZw"
+    }
+  ]
+}
