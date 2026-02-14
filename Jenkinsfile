@@ -20,6 +20,16 @@ spec:
       limits:
         cpu: 500m
         memory: 512Mi
+  - name: golang
+    image: golang:1.22-alpine
+    command: ['sleep', '3600']
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 2000m
+        memory: 1Gi
   - name: tools
     image: alpine:3.19
     command: ['sleep', '3600']
@@ -42,13 +52,13 @@ pipeline {
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         skipDefaultCheckout(true)
-        timeout(time: 10, unit: 'MINUTES')
+        timeout(time: 15, unit: 'MINUTES')
         disableConcurrentBuilds()
     }
 
     environment {
-        // gmailctl release version to download
-        GMAILCTL_VERSION = '0.10.7'
+        // gmailctl version to build from source
+        GMAILCTL_VERSION = '0.11.0'
     }
 
     stages {
@@ -89,38 +99,50 @@ pipeline {
             }
         }
 
-        stage('Download gmailctl') {
+        stage('Build gmailctl') {
             steps {
-                container('tools') {
+                container('golang') {
                     sh '''
-                        echo "=== Downloading gmailctl v${GMAILCTL_VERSION} ==="
+                        echo "=== Building gmailctl v${GMAILCTL_VERSION} from source ==="
 
-                        # Download for multiple platforms
+                        # Install git for go get
+                        apk add --no-cache git
+
+                        # Create output directory
                         mkdir -p dist
 
-                        # Linux amd64
-                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_linux_amd64.tar.gz" | tar -xz -C dist
-                        mv dist/gmailctl dist/gmailctl-linux-amd64
-
-                        # Linux arm64
-                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_linux_arm64.tar.gz" | tar -xz -C dist
-                        mv dist/gmailctl dist/gmailctl-linux-arm64
-
-                        # macOS amd64
-                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_darwin_amd64.tar.gz" | tar -xz -C dist
-                        mv dist/gmailctl dist/gmailctl-darwin-amd64
-
-                        # macOS arm64 (Apple Silicon)
-                        curl -sL "https://github.com/mbrt/gmailctl/releases/download/v${GMAILCTL_VERSION}/gmailctl_darwin_arm64.tar.gz" | tar -xz -C dist
-                        mv dist/gmailctl dist/gmailctl-darwin-arm64
+                        # Clone gmailctl source
+                        git clone --depth 1 --branch v${GMAILCTL_VERSION} https://github.com/mbrt/gmailctl.git /tmp/gmailctl
+                        cd /tmp/gmailctl
 
                         echo ""
-                        echo "=== Downloaded binaries ==="
-                        ls -la dist/
+                        echo "=== Cross-compiling for multiple platforms ==="
 
-                        # Verify one of them works
-                        chmod +x dist/gmailctl-linux-amd64
-                        ./dist/gmailctl-linux-amd64 version || echo "Version check skipped (may need glibc)"
+                        # Linux amd64
+                        echo "Building linux/amd64..."
+                        GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o ${WORKSPACE}/dist/gmailctl-linux-amd64 ./cmd/gmailctl
+
+                        # Linux arm64
+                        echo "Building linux/arm64..."
+                        GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o ${WORKSPACE}/dist/gmailctl-linux-arm64 ./cmd/gmailctl
+
+                        # macOS amd64
+                        echo "Building darwin/amd64..."
+                        GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o ${WORKSPACE}/dist/gmailctl-darwin-amd64 ./cmd/gmailctl
+
+                        # macOS arm64 (Apple Silicon)
+                        echo "Building darwin/arm64..."
+                        GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o ${WORKSPACE}/dist/gmailctl-darwin-arm64 ./cmd/gmailctl
+
+                        echo ""
+                        echo "=== Built binaries ==="
+                        ls -la ${WORKSPACE}/dist/
+
+                        # Verify linux/amd64 works
+                        echo ""
+                        echo "=== Version check ==="
+                        chmod +x ${WORKSPACE}/dist/gmailctl-linux-amd64
+                        ${WORKSPACE}/dist/gmailctl-linux-amd64 version || echo "Version: v${GMAILCTL_VERSION} (built from source)"
                     '''
                 }
             }
@@ -128,7 +150,7 @@ pipeline {
 
         stage('Push to Nexus') {
             when {
-                branch 'main'
+                branch 'master'
             }
             steps {
                 container('tools') {
@@ -138,6 +160,8 @@ pipeline {
                         passwordVariable: 'NEXUS_PASS'
                     )]) {
                         sh '''
+                            apk add --no-cache curl
+
                             echo "=== Pushing gmailctl binaries to Nexus ==="
 
                             NEXUS_URL="https://nexus.erauner.dev/repository/raw-hosted"
@@ -145,7 +169,7 @@ pipeline {
                             for binary in dist/gmailctl-*; do
                                 name=$(basename $binary)
                                 echo "Uploading $name..."
-                                curl -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                                curl -f -u "${NEXUS_USER}:${NEXUS_PASS}" \
                                     --upload-file "$binary" \
                                     "${NEXUS_URL}/gmailctl/v${GMAILCTL_VERSION}/${name}"
                             done
@@ -154,7 +178,7 @@ pipeline {
                             for binary in dist/gmailctl-*; do
                                 name=$(basename $binary)
                                 echo "Uploading $name as latest..."
-                                curl -u "${NEXUS_USER}:${NEXUS_PASS}" \
+                                curl -f -u "${NEXUS_USER}:${NEXUS_PASS}" \
                                     --upload-file "$binary" \
                                     "${NEXUS_URL}/gmailctl/latest/${name}"
                             done
