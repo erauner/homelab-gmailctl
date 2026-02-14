@@ -155,7 +155,7 @@ pipeline {
             steps {
                 container('tools') {
                     withCredentials([usernamePassword(
-                        credentialsId: 'nexus-admin',
+                        credentialsId: 'nexus-credentials',
                         usernameVariable: 'NEXUS_USER',
                         passwordVariable: 'NEXUS_PASS'
                     )]) {
