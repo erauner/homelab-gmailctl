@@ -150,7 +150,7 @@ pipeline {
 
         stage('Push to Nexus') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 container('tools') {
